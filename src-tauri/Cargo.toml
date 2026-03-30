@@ -1,0 +1,19 @@
+[package]
+name = "focused-writer"
+version = "1.0.0"
+description = "A focused text editor"
+authors = []
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.32", features = ["bundled"] }
+chrono = { version = "0.4", features = ["serde"] }
+directories = "6"
+sysinfo = "0.32"

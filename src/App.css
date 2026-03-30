@@ -1,0 +1,281 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  background: #1e1e1e;
+  color: #d4d4d4;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.title-input {
+  background: none;
+  border: 1px solid transparent;
+  color: #d4d4d4;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  flex: 1;
+  max-width: 300px;
+}
+
+.title-input:hover {
+  border-color: #3e3e42;
+}
+
+.title-input:focus {
+  outline: none;
+  border-color: #0e639c;
+  background: #1e1e1e;
+}
+
+.toolbar button {
+  padding: 5px 14px;
+  background: #0e639c;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.toolbar button:hover {
+  background: #1177bb;
+}
+
+.status {
+  font-size: 12px;
+  color: #808080;
+  margin-left: auto;
+}
+
+/* ── Session bar ──────────────────────────────────────────────────── */
+
+.session-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: #252526;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.session-bar--active {
+  background: #2d333b;
+  border-bottom-color: #3d8533;
+}
+
+.session-bar--completed {
+  background: #3d3324;
+  border-bottom-color: #8d6600;
+}
+
+.session-label {
+  font-size: 12px;
+  color: #808080;
+  margin-right: 4px;
+}
+
+.session-timer {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #4ec9b0;
+  margin-right: 12px;
+}
+
+.session-btn {
+  padding: 4px 12px;
+  background: #3e3e42;
+  color: #d4d4d4;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.session-btn:hover {
+  background: #505058;
+}
+
+.session-btn--stop {
+  background: #5a1d1d;
+  color: #f48771;
+}
+
+.session-btn--stop:hover {
+  background: #6e2222;
+}
+
+.session-btn--interrupt {
+  background: #5a1d1d;
+  color: #f48771;
+}
+
+.session-btn--interrupt:hover {
+  background: #6e2222;
+}
+
+.session-btn--reset {
+  background: #8d6600;
+  color: #e5c07b;
+}
+
+.session-btn--reset:hover {
+  background: #a07800;
+}
+
+/* ── Editor ───────────────────────────────────────────────────────── */
+
+.editor {
+  flex: 1;
+  resize: none;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border: none;
+  padding: 24px 20%;
+  font-size: 16px;
+  line-height: 1.8;
+  font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace;
+  outline: none;
+  overflow-y: auto;
+}
+
+.editor::selection {
+  background: #264f78;
+}
+
+.editor::placeholder {
+  color: #555;
+}
+
+/* ── Status bar ───────────────────────────────────────────────────── */
+
+.status-bar {
+  padding: 4px 16px;
+  background: #007acc;
+  color: #fff;
+  font-size: 11px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ── Modal ────────────────────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #2d2d2d;
+  border: 1px solid #3e3e42;
+  border-radius: 8px;
+  padding: 24px;
+  width: 360px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #d4d4d4;
+}
+
+.modal-desc {
+  font-size: 13px;
+  color: #808080;
+  margin-bottom: 16px;
+}
+
+.modal-desc code {
+  background: #1e1e1e;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #f48771;
+  font-family: "SF Mono", "Monaco", monospace;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: #1e1e1e;
+  border: 1px solid #3e3e42;
+  color: #d4d4d4;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: "SF Mono", "Monaco", monospace;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: #f48771;
+}
+
+.modal-error {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #f48771;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.modal-btn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.modal-btn--cancel {
+  background: #3e3e42;
+  color: #d4d4d4;
+}
+
+.modal-btn--cancel:hover {
+  background: #505058;
+}
+
+.modal-btn--confirm {
+  background: #5a1d1d;
+  color: #f48771;
+}
+
+.modal-btn--confirm:hover {
+  background: #6e2222;
+}
