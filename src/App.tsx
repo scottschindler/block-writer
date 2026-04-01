@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useSession } from "./useSession";
+
+const appWindow = getCurrentWindow();
 
 interface Document {
   id: number;
@@ -25,33 +27,154 @@ const DURATION_OPTIONS = [
   { label: "60 min", seconds: 3600 },
 ];
 
+function execFormat(command: string, value?: string) {
+  document.execCommand(command, false, value);
+}
+
+function queryFormat(command: string): boolean {
+  return document.queryCommandState(command);
+}
+
+function getBlockType(): string {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return "p";
+  let node: Node | null = sel.anchorNode;
+  while (node && node !== document) {
+    if (node.nodeType === 1) {
+      const tag = (node as Element).tagName.toLowerCase();
+      if (["h1", "h2", "h3", "blockquote"].includes(tag)) return tag;
+    }
+    node = node.parentNode;
+  }
+  return "p";
+}
+
+interface ToolbarButtonProps {
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+  title?: string;
+}
+
+function ToolbarButton({ label, active, onClick, title }: ToolbarButtonProps) {
+  return (
+    <button
+      className={`fmt-btn${active ? " fmt-btn--active" : ""}`}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onClick();
+      }}
+      title={title}
+    >
+      {label}
+    </button>
+  );
+}
+
+function ToolbarSep() {
+  return <div className="fmt-sep" />;
+}
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr + "Z");
+  const now = new Date();
+  const diff = now.getTime() - d.getTime();
+  if (diff < 60000) return "Just now";
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
 function App() {
+  const [docs, setDocs] = useState<Document[]>([]);
   const [docId, setDocId] = useState<number | null>(null);
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [status, setStatus] = useState("Ready");
+  const [status, setStatus] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const contentHtml = useRef("");
 
   const [showModal, setShowModal] = useState(false);
   const [passphrase, setPassphrase] = useState("");
   const [modalError, setModalError] = useState("");
   const [exitIntent, setExitIntent] = useState(false);
 
+  const [activeFormats, setActiveFormats] = useState({
+    bold: false,
+    italic: false,
+    underline: false,
+    strikeThrough: false,
+    insertUnorderedList: false,
+    insertOrderedList: false,
+    blockType: "p",
+  });
+
   const { session, start, stop, interrupt } = useSession();
 
+  const updateToolbarState = useCallback(() => {
+    setActiveFormats({
+      bold: queryFormat("bold"),
+      italic: queryFormat("italic"),
+      underline: queryFormat("underline"),
+      strikeThrough: queryFormat("strikeThrough"),
+      insertUnorderedList: queryFormat("insertUnorderedList"),
+      insertOrderedList: queryFormat("insertOrderedList"),
+      blockType: getBlockType(),
+    });
+  }, []);
+
+  const getPlainText = useCallback(() => {
+    return contentRef.current?.innerText || "";
+  }, []);
+
+  const getWordCount = useCallback(() => {
+    const text = getPlainText().trim();
+    return text ? text.split(/\s+/).length : 0;
+  }, [getPlainText]);
+
+  const getCharCount = useCallback(() => {
+    return getPlainText().length;
+  }, [getPlainText]);
+
+  const [wordCount, setWordCount] = useState(0);
+  const [charCount, setCharCount] = useState(0);
+
+  const updateCounts = useCallback(() => {
+    setWordCount(getWordCount());
+    setCharCount(getCharCount());
+  }, [getWordCount, getCharCount]);
+
+  const loadDocs = useCallback(async () => {
+    const documents = await invoke<Document[]>("list_documents");
+    setDocs(documents);
+    return documents;
+  }, []);
+
+  const loadDocument = useCallback((doc: Document) => {
+    setDocId(doc.id);
+    setTitle(doc.title);
+    contentHtml.current = doc.content;
+    if (contentRef.current) {
+      contentRef.current.innerHTML = doc.content;
+    }
+  }, []);
+
   const loadOrCreate = useCallback(async () => {
-    const docs = await invoke<Document[]>("list_documents");
-    if (docs.length > 0) {
-      const doc = docs[0];
-      setDocId(doc.id);
-      setTitle(doc.title);
-      setContent(doc.content);
+    const documents = await loadDocs();
+    if (documents.length > 0) {
+      loadDocument(documents[0]);
     } else {
       const id = await invoke<number>("create_document");
       setDocId(id);
       setTitle("");
-      setContent("");
+      contentHtml.current = "";
+      if (contentRef.current) {
+        contentRef.current.innerHTML = "";
+      }
+      await loadDocs();
     }
-  }, []);
+    updateCounts();
+  }, [loadDocs, loadDocument, updateCounts]);
 
   useEffect(() => {
     loadOrCreate();
@@ -60,23 +183,98 @@ function App() {
   const save = useCallback(async () => {
     if (docId === null) return;
     setStatus("Saving...");
-    await invoke("update_document", { id: docId, title, content });
+    await invoke("update_document", { id: docId, title, content: contentHtml.current });
     setStatus("Saved");
-    setTimeout(() => setStatus("Ready"), 1500);
-  }, [docId, title, content]);
+    await loadDocs();
+    setTimeout(() => setStatus(""), 1500);
+  }, [docId, title, loadDocs]);
+
+  const createNew = useCallback(async () => {
+    // Save current first
+    if (docId !== null) {
+      await invoke("update_document", { id: docId, title, content: contentHtml.current });
+    }
+    const id = await invoke<number>("create_document");
+    setDocId(id);
+    setTitle("");
+    contentHtml.current = "";
+    if (contentRef.current) {
+      contentRef.current.innerHTML = "";
+    }
+    updateCounts();
+    await loadDocs();
+  }, [docId, title, loadDocs, updateCounts]);
+
+  const switchDoc = useCallback(async (doc: Document) => {
+    // Save current first
+    if (docId !== null) {
+      await invoke("update_document", { id: docId, title, content: contentHtml.current });
+    }
+    loadDocument(doc);
+    updateCounts();
+    await loadDocs();
+  }, [docId, title, loadDocument, loadDocs, updateCounts]);
+
+  const deleteDoc = useCallback(async (id: number) => {
+    await invoke("delete_document", { id });
+    const documents = await loadDocs();
+    if (id === docId) {
+      if (documents.length > 0) {
+        loadDocument(documents[0]);
+      } else {
+        const newId = await invoke<number>("create_document");
+        setDocId(newId);
+        setTitle("");
+        contentHtml.current = "";
+        if (contentRef.current) {
+          contentRef.current.innerHTML = "";
+        }
+        await loadDocs();
+      }
+      updateCounts();
+    }
+  }, [docId, loadDocs, loadDocument, updateCounts]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-        e.preventDefault();
-        save();
+      if (!(e.metaKey || e.ctrlKey)) return;
+      switch (e.key.toLowerCase()) {
+        case "s":
+          e.preventDefault();
+          save();
+          break;
+        case "b":
+          e.preventDefault();
+          execFormat("bold");
+          updateToolbarState();
+          break;
+        case "i":
+          e.preventDefault();
+          execFormat("italic");
+          updateToolbarState();
+          break;
+        case "u":
+          e.preventDefault();
+          execFormat("underline");
+          updateToolbarState();
+          break;
+        case "n":
+          if (e.shiftKey) {
+            e.preventDefault();
+            createNew();
+          }
+          break;
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [save]);
+  }, [save, updateToolbarState, createNew]);
 
-  // Listen for close-requested from Rust (intercepted window close / Cmd+Q)
+  useEffect(() => {
+    document.addEventListener("selectionchange", updateToolbarState);
+    return () => document.removeEventListener("selectionchange", updateToolbarState);
+  }, [updateToolbarState]);
+
   useEffect(() => {
     let unlisten: (() => void) | undefined;
     listen("show-exit-passphrase-modal", () => {
@@ -119,64 +317,194 @@ function App() {
     setExitIntent(false);
   };
 
+  const handleInput = () => {
+    if (contentRef.current) {
+      contentHtml.current = contentRef.current.innerHTML;
+      updateCounts();
+    }
+  };
+
+  const toggleBlock = (tag: string) => {
+    const current = getBlockType();
+    if (current === tag) {
+      execFormat("formatBlock", "p");
+    } else {
+      execFormat("formatBlock", tag);
+    }
+    updateToolbarState();
+  };
+
   const isActive = session.state === "active";
   const isCompleted = session.state === "completed";
 
   return (
     <div className="app">
-      <div className="toolbar">
-        <input
-          className="title-input"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Untitled"
-        />
-        <button onClick={save}>Save</button>
-        <span className="status">{status}</span>
-      </div>
+      {/* Drag region for window movement */}
+      <div className="drag-bar" onMouseDown={() => appWindow.startDragging()} />
 
-      {isActive && (
-        <div className="session-bar session-bar--active">
-          <span className="session-timer">{formatTime(session.remainingSec)}</span>
-          <button className="session-btn session-btn--interrupt" onClick={openEndSessionModal}>
-            End Session
-          </button>
-        </div>
-      )}
-
-      {isCompleted && (
-        <div className="session-bar session-bar--completed">
-          <span>Session complete</span>
-          <button className="session-btn session-btn--reset" onClick={stop}>
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {session.state === "idle" && (
-        <div className="session-bar">
-          <span className="session-label">Start a session:</span>
-          {DURATION_OPTIONS.map((opt) => (
+      <div className="layout">
+        {/* Sidebar */}
+        <div className={`sidebar${sidebarOpen ? "" : " sidebar--collapsed"}`}>
+          <div className="sidebar-header">
             <button
-              key={opt.seconds}
-              className="session-btn"
-              onClick={() => start(opt.seconds)}
+              className="sidebar-toggle"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
             >
-              {opt.label}
+              {sidebarOpen ? "\u2039" : "\u203A"}
             </button>
-          ))}
+            {sidebarOpen && (
+              <button className="sidebar-new" onClick={createNew} title="New document (⌘⇧N)">
+                +
+              </button>
+            )}
+          </div>
+          {sidebarOpen && (
+            <div className="sidebar-list">
+              {docs.map((doc) => (
+                <div
+                  key={doc.id}
+                  className={`sidebar-item${doc.id === docId ? " sidebar-item--active" : ""}`}
+                  onClick={() => switchDoc(doc)}
+                >
+                  <span className="sidebar-item-title">
+                    {doc.title || "Untitled"}
+                  </span>
+                  <span className="sidebar-item-date">
+                    {formatDate(doc.updated_at)}
+                  </span>
+                  {docs.length > 1 && (
+                    <button
+                      className="sidebar-item-delete"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteDoc(doc.id);
+                      }}
+                      title="Delete"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
 
-      <textarea
-        className="editor"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="Start writing..."
-      />
+        {/* Main content */}
+        <div className="main">
+          <div className="toolbar">
+            <input
+              className="title-input"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Untitled"
+            />
+            <span className="status">{status}</span>
+          </div>
 
-      <div className="status-bar">
-        <span>{content.length} characters</span>
+          <div className="fmt-bar">
+            <ToolbarButton
+              label="H1"
+              active={activeFormats.blockType === "h1"}
+              onClick={() => toggleBlock("h1")}
+              title="Heading 1"
+            />
+            <ToolbarButton
+              label="H2"
+              active={activeFormats.blockType === "h2"}
+              onClick={() => toggleBlock("h2")}
+              title="Heading 2"
+            />
+            <ToolbarSep />
+            <ToolbarButton
+              label="B"
+              active={activeFormats.bold}
+              onClick={() => execFormat("bold")}
+              title="Bold (⌘B)"
+            />
+            <ToolbarButton
+              label="I"
+              active={activeFormats.italic}
+              onClick={() => execFormat("italic")}
+              title="Italic (⌘I)"
+            />
+            <ToolbarButton
+              label="U"
+              active={activeFormats.underline}
+              onClick={() => execFormat("underline")}
+              title="Underline (⌘U)"
+            />
+            <ToolbarButton
+              label="S"
+              active={activeFormats.strikeThrough}
+              onClick={() => execFormat("strikeThrough")}
+              title="Strikethrough"
+            />
+            <ToolbarSep />
+            <ToolbarButton
+              label="•"
+              active={activeFormats.insertUnorderedList}
+              onClick={() => execFormat("insertUnorderedList")}
+              title="Bullet list"
+            />
+            <ToolbarButton
+              label="1."
+              active={activeFormats.insertOrderedList}
+              onClick={() => execFormat("insertOrderedList")}
+              title="Numbered list"
+            />
+          </div>
+
+          {isActive && (
+            <div className="session-bar session-bar--active">
+              <span className="session-timer">{formatTime(session.remainingSec)}</span>
+              <button className="session-btn session-btn--interrupt" onClick={openEndSessionModal}>
+                End Session
+              </button>
+            </div>
+          )}
+
+          {isCompleted && (
+            <div className="session-bar session-bar--completed">
+              <span>Session complete</span>
+              <button className="session-btn session-btn--reset" onClick={stop}>
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          {session.state === "idle" && (
+            <div className="session-bar">
+              <span className="session-label">Session:</span>
+              {DURATION_OPTIONS.map((opt) => (
+                <button
+                  key={opt.seconds}
+                  className="session-btn"
+                  onClick={() => start(opt.seconds)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div
+            ref={contentRef}
+            className="editor"
+            contentEditable
+            onInput={handleInput}
+            onKeyUp={updateToolbarState}
+            onMouseUp={updateToolbarState}
+            data-placeholder="Start writing..."
+            spellCheck
+          />
+
+          <div className="status-bar">
+            <span>{wordCount} words</span>
+            <span>{charCount} characters</span>
+          </div>
+        </div>
       </div>
 
       {showModal && (
