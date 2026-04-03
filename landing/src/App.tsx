@@ -77,6 +77,7 @@ function App() {
             </a>
             <span className="price">3 free sessions, then $10</span>
           </div>
+          <p className="install-hint">Open the downloaded file and drag Focused Writer to Applications.</p>
         </div>
 
         <div className="hero-right">
