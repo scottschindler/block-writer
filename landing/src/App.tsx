@@ -71,7 +71,7 @@ function App() {
           <div className="cta-group">
             <a
               className="btn-download"
-              href="https://github.com/scottschindler/focused-writer/releases/latest/download/Focused_Writer_1.0.0_aarch64.dmg"
+              href="https://github.com/scottschindler/focused-writer/releases/latest/download/Focused-Writer-mac-arm64.dmg"
             >
               Download for Mac
             </a>
