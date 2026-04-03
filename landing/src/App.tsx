@@ -76,6 +76,7 @@ function App() {
             </a>
             <span className="price">$10 one time</span>
           </div>
+        </div>
 
         <div className="hero-right">
           <div className="app-window">
