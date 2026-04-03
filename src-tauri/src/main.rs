@@ -10,7 +10,7 @@ use directories::ProjectDirs;
 use enforcement::EnforcementState;
 use rusqlite::Connection;
 use session::SessionState;
-use tauri::menu::{MenuBuilder, PredefinedMenuItem};
+use tauri::menu::{MenuBuilder, PredefinedMenuItem, SubmenuBuilder};
 use tauri::{Emitter, Manager, RunEvent, WindowEvent};
 
 pub struct AppState {
@@ -45,7 +45,7 @@ fn main() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .menu(|app| {
-            MenuBuilder::new(app)
+            let app_menu = SubmenuBuilder::new(app, "Focused Writer")
                 .item(&PredefinedMenuItem::about(
                     app,
                     Some("Focused Writer"),
@@ -58,6 +58,21 @@ fn main() {
                 .separator()
                 .item(&PredefinedMenuItem::close_window(app, None)?)
                 .quit()
+                .build()?;
+
+            let edit_menu = SubmenuBuilder::new(app, "Edit")
+                .undo()
+                .redo()
+                .separator()
+                .cut()
+                .copy()
+                .paste()
+                .select_all()
+                .build()?;
+
+            MenuBuilder::new(app)
+                .item(&app_menu)
+                .item(&edit_menu)
                 .build()
         })
         .manage(AppState {
