@@ -52,7 +52,7 @@ function App() {
         </div>
         <a
           className="btn-nav"
-          href="https://github.com/scottschindler/focused-writer/releases/latest/download/Focused_Writer_1.0.0_aarch64.dmg"
+          href="https://github.com/scottschindler/focused-writer/releases/latest/download/Focused-Writer-mac-arm64.dmg"
         >
           Download
         </a>

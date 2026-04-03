@@ -3,7 +3,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const DMG_URL =
-  "https://github.com/scottschindler/focused-writer/releases/latest/download/Focused_Writer_1.0.0_aarch64.dmg";
+  "https://github.com/scottschindler/focused-writer/releases/latest/download/Focused-Writer-mac-arm64.dmg";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { session_id } = req.query;
