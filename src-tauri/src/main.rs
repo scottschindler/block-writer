@@ -40,7 +40,24 @@ fn main() {
         )",
         [],
     )
-    .expect("Failed to create table");
+    .expect("Failed to create documents table");
+
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS license (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            activated INTEGER NOT NULL DEFAULT 0,
+            sessions_completed INTEGER NOT NULL DEFAULT 0,
+            activation_code TEXT
+        )",
+        [],
+    )
+    .expect("Failed to create license table");
+
+    conn.execute(
+        "INSERT OR IGNORE INTO license (id, activated, sessions_completed) VALUES (1, 0, 0)",
+        [],
+    )
+    .expect("Failed to seed license row");
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -154,6 +171,9 @@ fn main() {
             commands::stop_session,
             commands::interrupt_session,
             commands::unlock_quit,
+            commands::get_license_status,
+            commands::activate_license,
+            commands::record_session_completed,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

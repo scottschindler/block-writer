@@ -5,6 +5,79 @@ use crate::enforcement::EnforcementState;
 use crate::session::SessionSnapshot;
 use crate::AppState;
 
+// ── License types & commands ──────────────────────────────────────────
+
+const FREE_SESSIONS: i64 = 3;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct LicenseStatus {
+    pub activated: bool,
+    pub sessions_completed: i64,
+    pub free_sessions: i64,
+    pub can_start_session: bool,
+}
+
+#[tauri::command]
+pub fn get_license_status(state: State<AppState>) -> Result<LicenseStatus, String> {
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
+    let (activated, sessions_completed): (bool, i64) = conn
+        .query_row(
+            "SELECT activated, sessions_completed FROM license WHERE id = 1",
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .map_err(|e| e.to_string())?;
+
+    Ok(LicenseStatus {
+        activated,
+        sessions_completed,
+        free_sessions: FREE_SESSIONS,
+        can_start_session: activated || sessions_completed < FREE_SESSIONS,
+    })
+}
+
+#[derive(Deserialize)]
+struct VerifyResponse {
+    valid: bool,
+}
+
+#[tauri::command]
+pub fn activate_license(state: State<AppState>, code: String) -> Result<LicenseStatus, String> {
+    let verify_url = "https://focusedwriter.com/api/verify";
+    let resp = reqwest::blocking::get(format!("{}?session_id={}", verify_url, code))
+        .map_err(|e| format!("Network error: {}", e))?
+        .json::<VerifyResponse>()
+        .map_err(|e| format!("Invalid response: {}", e))?;
+
+    if !resp.valid {
+        return Err("Invalid or unpaid activation code".into());
+    }
+
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "UPDATE license SET activated = 1, activation_code = ?1 WHERE id = 1",
+        [&code],
+    )
+    .map_err(|e| e.to_string())?;
+
+    drop(conn);
+    get_license_status(state)
+}
+
+#[tauri::command]
+pub fn record_session_completed(state: State<AppState>) -> Result<LicenseStatus, String> {
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "UPDATE license SET sessions_completed = sessions_completed + 1 WHERE id = 1",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+
+    drop(conn);
+    get_license_status(state)
+}
+
 // ── Document types & commands ──────────────────────────────────────────
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

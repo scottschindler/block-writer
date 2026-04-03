@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { open } from "@tauri-apps/plugin-shell";
 import { useSession } from "./useSession";
+import { getLicenseStatus, activateLicense, recordSessionCompleted, type LicenseStatus } from "./license";
 
 const appWindow = getCurrentWindow();
 
@@ -99,6 +101,11 @@ function App() {
   const [modalError, setModalError] = useState("");
   const [exitIntent, setExitIntent] = useState(false);
 
+  const [license, setLicense] = useState<LicenseStatus | null>(null);
+  const [activationCode, setActivationCode] = useState("");
+  const [activationError, setActivationError] = useState("");
+  const [activating, setActivating] = useState(false);
+
   const [activeFormats, setActiveFormats] = useState({
     bold: false,
     italic: false,
@@ -178,7 +185,15 @@ function App() {
 
   useEffect(() => {
     loadOrCreate();
+    getLicenseStatus().then(setLicense);
   }, [loadOrCreate]);
+
+  // Track session completions for trial counting
+  useEffect(() => {
+    if (session.state === "completed") {
+      recordSessionCompleted().then(setLicense);
+    }
+  }, [session.state]);
 
   const save = useCallback(async () => {
     if (docId === null) return;
@@ -334,8 +349,25 @@ function App() {
     updateToolbarState();
   };
 
+  const handleActivate = async () => {
+    if (!activationCode.trim()) return;
+    setActivating(true);
+    setActivationError("");
+    try {
+      const status = await activateLicense(activationCode.trim());
+      setLicense(status);
+      setActivationCode("");
+    } catch (e: any) {
+      setActivationError(e?.toString() || "Activation failed");
+    } finally {
+      setActivating(false);
+    }
+  };
+
   const isActive = session.state === "active";
   const isCompleted = session.state === "completed";
+  const showPaywall = license !== null && !license.canStartSession;
+  const sessionsRemaining = license ? license.freeSessions - license.sessionsCompleted : null;
 
   return (
     <div className="app">
@@ -474,7 +506,7 @@ function App() {
             </div>
           )}
 
-          {session.state === "idle" && (
+          {session.state === "idle" && !showPaywall && (
             <div className="session-bar">
               <span className="session-label">Session:</span>
               {DURATION_OPTIONS.map((opt) => (
@@ -486,19 +518,66 @@ function App() {
                   {opt.label}
                 </button>
               ))}
+              {sessionsRemaining !== null && !license?.activated && sessionsRemaining > 0 && (
+                <span className="session-label" style={{ marginLeft: "auto" }}>
+                  {sessionsRemaining} free session{sessionsRemaining !== 1 ? "s" : ""} remaining
+                </span>
+              )}
             </div>
           )}
 
-          <div
-            ref={contentRef}
-            className="editor"
-            contentEditable
-            onInput={handleInput}
-            onKeyUp={updateToolbarState}
-            onMouseUp={updateToolbarState}
-            data-placeholder="Start writing..."
-            spellCheck
-          />
+          {session.state === "idle" && showPaywall && (
+            <div className="paywall">
+              <div className="paywall-content">
+                <h2 className="paywall-title">Free trial complete</h2>
+                <p className="paywall-desc">
+                  You've used your 3 free sessions. Purchase Focused Writer for a one-time fee of $10 to continue.
+                </p>
+                <button
+                  className="paywall-buy"
+                  onClick={() => open("https://focusedwriter.com/api/checkout")}
+                >
+                  Buy for $10
+                </button>
+                <div className="paywall-activate">
+                  <p className="paywall-activate-label">Already purchased? Enter your activation code:</p>
+                  <div className="paywall-activate-row">
+                    <input
+                      className="paywall-input"
+                      value={activationCode}
+                      onChange={(e) => {
+                        setActivationCode(e.target.value);
+                        setActivationError("");
+                      }}
+                      onKeyDown={(e) => e.key === "Enter" && handleActivate()}
+                      placeholder="cs_live_..."
+                    />
+                    <button
+                      className="paywall-activate-btn"
+                      onClick={handleActivate}
+                      disabled={activating}
+                    >
+                      {activating ? "Verifying..." : "Activate"}
+                    </button>
+                  </div>
+                  {activationError && <p className="paywall-error">{activationError}</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!showPaywall && (
+            <div
+              ref={contentRef}
+              className="editor"
+              contentEditable
+              onInput={handleInput}
+              onKeyUp={updateToolbarState}
+              onMouseUp={updateToolbarState}
+              data-placeholder="Start writing..."
+              spellCheck
+            />
+          )}
 
           <div className="status-bar">
             <span>{wordCount} words</span>
