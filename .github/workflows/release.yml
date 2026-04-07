@@ -48,6 +48,8 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_SIGNING_IDENTITY: "Developer ID Application"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run tauri build -- --target aarch64-apple-darwin
 
       - name: Rename DMG to stable filename
@@ -55,9 +57,38 @@ jobs:
           DMG=$(find src-tauri/target/aarch64-apple-darwin/release/bundle/dmg -name '*.dmg' | head -1)
           cp "$DMG" src-tauri/target/Focused-Writer-mac-arm64.dmg
 
+      - name: Prepare update artifacts
+        run: |
+          MACOS_BUNDLE_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/macos"
+          TAR_GZ=$(find "$MACOS_BUNDLE_DIR" -name '*.app.tar.gz' ! -name '*.sig' | head -1)
+          TAR_GZ_SIG="${TAR_GZ}.sig"
+
+          cp "$TAR_GZ" src-tauri/target/Focused-Writer-mac-arm64.app.tar.gz
+          cp "$TAR_GZ_SIG" src-tauri/target/Focused-Writer-mac-arm64.app.tar.gz.sig
+
+          SIGNATURE=$(cat "$TAR_GZ_SIG")
+          VERSION="${GITHUB_REF_NAME#v}"
+
+          cat > src-tauri/target/latest.json << EOF
+          {
+            "version": "$VERSION",
+            "notes": "See release notes on GitHub",
+            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "platforms": {
+              "darwin-aarch64": {
+                "signature": "$SIGNATURE",
+                "url": "https://github.com/scottschindler/focused-writer/releases/download/${GITHUB_REF_NAME}/Focused-Writer-mac-arm64.app.tar.gz"
+              }
+            }
+          }
+          EOF
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             src-tauri/target/Focused-Writer-mac-arm64.dmg
+            src-tauri/target/Focused-Writer-mac-arm64.app.tar.gz
+            src-tauri/target/Focused-Writer-mac-arm64.app.tar.gz.sig
+            src-tauri/target/latest.json
           generate_release_notes: true

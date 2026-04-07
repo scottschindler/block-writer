@@ -278,6 +278,50 @@ body {
   margin: 0 6px;
 }
 
+/* ── Update banner ───────────────────────────────────────────────── */
+
+.update-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 20px;
+  background: #f0f7ff;
+  border-bottom: 1px solid #d0e3f7;
+  font-size: 12px;
+  color: #333;
+}
+
+.update-btn {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.update-btn--install {
+  background: #0066cc;
+  color: #fff;
+}
+
+.update-btn--install:hover {
+  background: #0055aa;
+}
+
+.update-btn--install:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.update-btn--dismiss {
+  background: transparent;
+  color: #666;
+}
+
+.update-btn--dismiss:hover {
+  color: #333;
+}
+
 /* ── Session bar ──────────────────────────────────────────────────── */
 
 .session-bar {

@@ -5,6 +5,8 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open } from "@tauri-apps/plugin-shell";
 import { useSession } from "./useSession";
 import { getLicenseStatus, activateLicense, recordSessionCompleted, type LicenseStatus } from "./license";
+import { checkForUpdate, installUpdate, type UpdateResult } from "./updater";
+import type { Update } from "@tauri-apps/plugin-updater";
 
 const appWindow = getCurrentWindow();
 
@@ -117,6 +119,10 @@ function App() {
     blockType: "p",
   });
 
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null);
+  const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
+  const [updating, setUpdating] = useState(false);
+
   const { session, start, stop, interrupt } = useSession();
 
   const updateToolbarState = useCallback(() => {
@@ -193,6 +199,17 @@ function App() {
     loadOrCreate();
     getLicenseStatus().then(setLicense);
   }, [loadOrCreate]);
+
+  useEffect(() => {
+    checkForUpdate()
+      .then((result) => {
+        if (result.available && result.version && result.update) {
+          setUpdateVersion(result.version);
+          setPendingUpdate(result.update);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Track session completions for trial counting
   const prevSessionState = useRef(session.state);
@@ -447,6 +464,33 @@ function App() {
           <div className="toolbar">
             <span className="status">{status}</span>
           </div>
+
+          {updateVersion && !isActive && (
+            <div className="update-banner">
+              <span>Version {updateVersion} is available.</span>
+              <button
+                className="update-btn update-btn--install"
+                onClick={async () => {
+                  if (!pendingUpdate) return;
+                  setUpdating(true);
+                  try {
+                    await installUpdate(pendingUpdate);
+                  } catch {
+                    setUpdating(false);
+                  }
+                }}
+                disabled={updating}
+              >
+                {updating ? "Updating..." : "Update now"}
+              </button>
+              <button
+                className="update-btn update-btn--dismiss"
+                onClick={() => setUpdateVersion(null)}
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
           <div className="fmt-bar">
             <ToolbarButton
