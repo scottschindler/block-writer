@@ -103,6 +103,7 @@ function App() {
   const [passphrase, setPassphrase] = useState("");
   const [modalError, setModalError] = useState("");
   const [exitIntent, setExitIntent] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
   const [license, setLicense] = useState<LicenseStatus | null>(null);
   const [activationCode, setActivationCode] = useState("");
@@ -201,6 +202,7 @@ function App() {
   }, [loadOrCreate]);
 
   useEffect(() => {
+    if (import.meta.env.DEV) return;
     checkForUpdate()
       .then((result) => {
         if (result.available && result.version && result.update) {
@@ -261,7 +263,10 @@ function App() {
     updateCounts();
   }, [docId, title, loadDocument, loadDocs, updateCounts]);
 
-  const deleteDoc = useCallback(async (id: number) => {
+  const confirmDelete = useCallback(async () => {
+    if (deleteTarget === null) return;
+    const id = deleteTarget;
+    setDeleteTarget(null);
     await invoke("delete_document", { id });
     const documents = await loadDocs();
     if (id === docId) {
@@ -279,7 +284,7 @@ function App() {
       }
       updateCounts();
     }
-  }, [docId, loadDocs, loadDocument, updateCounts]);
+  }, [deleteTarget, docId, loadDocs, loadDocument, updateCounts]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -458,7 +463,7 @@ function App() {
                       className="sidebar-item-delete"
                       onClick={(e) => {
                         e.stopPropagation();
-                        deleteDoc(doc.id);
+                        setDeleteTarget(doc.id);
                       }}
                       title="Delete"
                     >
@@ -678,6 +683,25 @@ function App() {
               </button>
               <button className="modal-btn modal-btn--confirm" onClick={handleConfirm}>
                 Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget !== null && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3 className="modal-title">Delete note</h3>
+            <p className="modal-desc">
+              Are you sure you want to delete this note? This can't be undone.
+            </p>
+            <div className="modal-actions">
+              <button className="modal-btn modal-btn--cancel" onClick={() => setDeleteTarget(null)}>
+                Cancel
+              </button>
+              <button className="modal-btn modal-btn--confirm" onClick={confirmDelete}>
+                Delete
               </button>
             </div>
           </div>

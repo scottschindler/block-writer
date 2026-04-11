@@ -91,9 +91,11 @@ a {
 
 .hero {
   flex: 1;
-  display: flex;
-  align-items: flex-start;
-  padding: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 48px 10%;
+  gap: 48px;
 }
 
 /* ── Hero left ────────────────────────────────────────────────────── */
@@ -103,15 +105,12 @@ a {
   flex-direction: column;
   justify-content: center;
   gap: 20px;
-  padding-left: 10%;
   max-width: 520px;
 }
 
 .hero-left h1 {
   font-size: clamp(2.8rem, 5vw, 4rem);
-  font-weight: 700;
-  font-style: italic;
-  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.1;
   color: var(--text);
@@ -156,6 +155,216 @@ a {
 .install-hint {
   font-size: 13px;
   color: var(--muted);
+}
+
+/* ── Hero right ───────────────────────────────────────────────────── */
+
+.hero-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-window {
+  width: 100%;
+  max-width: 520px;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.window-chrome {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 14px 16px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dot {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.dot.red    { background: #ff5f57; }
+.dot.yellow { background: #febc2e; }
+.dot.green  { background: #28c840; }
+
+.window-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Demo layout ─────────────────────────────────────────────────── */
+
+.demo-layout {
+  display: flex;
+  height: 340px;
+}
+
+.demo-sidebar {
+  width: 140px;
+  min-width: 140px;
+  background: #fff;
+  border-right: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+}
+
+.demo-sidebar-toggle,
+.demo-sidebar-new {
+  font-size: 14px;
+  color: #999;
+}
+
+.demo-sidebar-item {
+  padding: 6px 10px;
+  border-left: 2px solid transparent;
+}
+
+.demo-sidebar-item--active {
+  background: #f0f0f0;
+  border-left-color: #111;
+}
+
+.demo-sidebar-title {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.demo-sidebar-date {
+  display: block;
+  font-size: 9px;
+  color: #aaa;
+  margin-top: 1px;
+}
+
+.demo-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.demo-fmt-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 10px;
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.demo-fmt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 600;
+  color: #666;
+}
+
+.demo-fmt-btn--active {
+  background: #111;
+  color: #fff;
+}
+
+.demo-fmt-sep {
+  width: 1px;
+  height: 12px;
+  background: #e5e5e5;
+  margin: 0 4px;
+}
+
+.demo-session-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.demo-timer {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-family: "SF Mono", "Monaco", "Menlo", monospace;
+  color: #111;
+  letter-spacing: 0.04em;
+}
+
+.demo-end-btn {
+  font-size: 9px;
+  color: #999;
+}
+
+.editor-area {
+  flex: 1;
+  padding: 16px 20px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.editor-text {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  margin: 0 0 0.4em;
+}
+
+.editor-text--heading {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 0.3em;
+  color: #111;
+}
+
+.cursor {
+  display: inline-block;
+  width: 1.5px;
+  height: 14px;
+  background: var(--text);
+  margin-left: 1px;
+  vertical-align: middle;
+  animation: blink 1.1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.demo-status-bar {
+  display: flex;
+  gap: 12px;
+  padding: 4px 10px;
+  border-top: 1px solid #e8e8e8;
+  font-size: 9px;
+  color: #aaa;
+  letter-spacing: 0.02em;
 }
 
 /* ── Activation code ──────────────────────────────────────────────── */
@@ -218,7 +427,9 @@ a {
   }
 
   .hero {
+    grid-template-columns: 1fr;
     padding: 32px 24px 0;
+    gap: 40px;
   }
 
   .hero-left {
