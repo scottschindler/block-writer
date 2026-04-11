@@ -48,8 +48,8 @@ body {
 .sidebar {
   width: 220px;
   min-width: 220px;
-  background: #fafafa;
-  border-right: 1px solid #e5e5e5;
+  background: #fff;
+  border-right: 1px solid #eee;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -66,7 +66,6 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 8px 10px;
-  border-bottom: 1px solid #e5e5e5;
 }
 
 .sidebar-toggle {
@@ -80,7 +79,7 @@ body {
   cursor: pointer;
   color: #999;
   font-size: 18px;
-  border-radius: 4px;
+  border-radius: 50%;
   transition: background 0.1s, color 0.1s;
 }
 
@@ -100,7 +99,7 @@ body {
   cursor: pointer;
   color: #999;
   font-size: 18px;
-  border-radius: 4px;
+  border-radius: 50%;
   transition: background 0.1s, color 0.1s;
 }
 
@@ -163,7 +162,7 @@ body {
   cursor: pointer;
   color: #ccc;
   font-size: 14px;
-  border-radius: 3px;
+  border-radius: 50%;
 }
 
 .sidebar-item:hover .sidebar-item-delete {
@@ -184,42 +183,7 @@ body {
   overflow: hidden;
 }
 
-/* ── Toolbar ──────────────────────────────────────────────────────── */
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 20px;
-  background: #fff;
-  border-bottom: 1px solid #e5e5e5;
-}
-
-.title-input {
-  background: none;
-  border: 1px solid transparent;
-  color: #111;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 4px 6px;
-  border-radius: 4px;
-  flex: 1;
-  max-width: 360px;
-}
-
-.title-input::placeholder {
-  color: #bbb;
-}
-
-.title-input:hover {
-  border-color: #e5e5e5;
-}
-
-.title-input:focus {
-  outline: none;
-  border-color: #ccc;
-  background: #fafafa;
-}
+/* ── Status (inside fmt-bar) ──────────────────────────────────────── */
 
 .status {
   font-size: 11px;
@@ -247,7 +211,7 @@ body {
   height: 28px;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: 50%;
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;

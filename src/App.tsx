@@ -371,7 +371,19 @@ function App() {
       // Derive title from first line of text
       const text = contentRef.current.innerText || "";
       const firstLine = text.split("\n").find((l) => l.trim() !== "") || "";
-      setTitle(firstLine.trim().substring(0, 100));
+      const newTitle = firstLine.trim().substring(0, 100);
+      setTitle(newTitle);
+      // Move current doc to top of sidebar immediately
+      if (docId !== null) {
+        setDocs((prev) => {
+          const idx = prev.findIndex((d) => d.id === docId);
+          if (idx <= 0) return prev;
+          const updated = [...prev];
+          const [doc] = updated.splice(idx, 1);
+          updated.unshift({ ...doc, title: newTitle || doc.title });
+          return updated;
+        });
+      }
     }
   };
 
@@ -461,9 +473,6 @@ function App() {
 
         {/* Main content */}
         <div className="main">
-          <div className="toolbar">
-            <span className="status">{status}</span>
-          </div>
 
           {updateVersion && !isActive && (
             <div className="update-banner">
@@ -543,6 +552,7 @@ function App() {
               onClick={() => execFormat("insertOrderedList")}
               title="Numbered list"
             />
+            {status && <span className="status">{status}</span>}
           </div>
 
           {isActive && (
@@ -588,13 +598,13 @@ function App() {
               <div className="paywall-content">
                 <h2 className="paywall-title">Free trial complete</h2>
                 <p className="paywall-desc">
-                  You've used your 3 free sessions. Purchase Focused Writer for a one-time fee of $10 to continue.
+                  You've used your 3 free sessions. Purchase Focused Writer for a one-time fee of $15 to continue.
                 </p>
                 <button
                   className="paywall-buy"
                   onClick={() => open("https://buy.stripe.com/eVq9AV8aT3fBaro0F06J200")}
                 >
-                  Buy for $10
+                  Buy for $15
                 </button>
                 <div className="paywall-activate">
                   <p className="paywall-activate-label">Already purchased? Enter your activation code:</p>

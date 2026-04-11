@@ -75,36 +75,11 @@ function App() {
             >
               Download for Mac
             </a>
-            <span className="price">3 free sessions, then $10</span>
+            <span className="price">3 free sessions, then $15</span>
           </div>
           <p className="install-hint">Open the downloaded file and drag Focused Writer to Applications.</p>
         </div>
 
-        <div className="hero-right">
-          <div className="app-window">
-            <div className="window-chrome">
-              <span className="dot red" />
-              <span className="dot yellow" />
-              <span className="dot green" />
-            </div>
-            <div className="window-body">
-              <div className="timer-bar">
-                <span className="timer-label">SESSION</span>
-                <span className="timer-value">25:00</span>
-              </div>
-              <div className="editor-area">
-                <div className="cursor-line">
-                  <span className="editor-text">The quick brown fox</span>
-                  <span className="cursor" />
-                </div>
-              </div>
-              <div className="locked-bar">
-                <span className="locked-dot" />
-                SYSTEM LOCKED
-              </div>
-            </div>
-          </div>
-        </div>
       </main>
 
       <footer className="footer">
