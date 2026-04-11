@@ -592,7 +592,7 @@ function App() {
                 </p>
                 <button
                   className="paywall-buy"
-                  onClick={() => open("https://focusedwriter.com/api/checkout")}
+                  onClick={() => open("https://buy.stripe.com/eVq9AV8aT3fBaro0F06J200")}
                 >
                   Buy for $10
                 </button>
@@ -607,7 +607,7 @@ function App() {
                         setActivationError("");
                       }}
                       onKeyDown={(e) => e.key === "Enter" && handleActivate()}
-                      placeholder="cs_live_..."
+                      placeholder="Paste your activation code"
                     />
                     <button
                       className="paywall-activate-btn"

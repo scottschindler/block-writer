@@ -44,7 +44,7 @@ struct VerifyResponse {
 
 #[tauri::command]
 pub fn activate_license(state: State<AppState>, code: String) -> Result<LicenseStatus, String> {
-    let verify_url = "https://focusedwriter.com/api/verify";
+    let verify_url = "https://focused-writer.vercel.app/api/verify";
     let resp = reqwest::blocking::get(format!("{}?session_id={}", verify_url, code))
         .map_err(|e| format!("Network error: {}", e))?
         .json::<VerifyResponse>()
