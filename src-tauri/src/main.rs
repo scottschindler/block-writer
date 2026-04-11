@@ -10,7 +10,7 @@ use directories::ProjectDirs;
 use enforcement::EnforcementState;
 use rusqlite::Connection;
 use session::SessionState;
-use tauri::menu::{MenuBuilder, PredefinedMenuItem, SubmenuBuilder};
+use tauri::menu::{MenuBuilder, MenuItem, PredefinedMenuItem, SubmenuBuilder};
 use tauri::{Emitter, Manager, RunEvent, WindowEvent};
 
 pub struct AppState {
@@ -84,7 +84,7 @@ fn main() {
                 .item(&PredefinedMenuItem::show_all(handle, None)?)
                 .separator()
                 .item(&PredefinedMenuItem::close_window(handle, None)?)
-                .quit()
+                .item(&MenuItem::with_id(handle, "custom-quit", "Quit Focused Writer", true, Some("CmdOrCtrl+Q"))?)
                 .build()?;
 
             let edit_menu = SubmenuBuilder::new(handle, "Edit")
@@ -155,6 +155,17 @@ fn main() {
             });
 
             Ok(())
+        })
+        .on_menu_event(|app, event| {
+            if event.id().as_ref() == "custom-quit" {
+                let state = app.state::<AppState>();
+                let allow_quit = state.allow_quit.lock().map(|g| *g).unwrap_or(false);
+                if allow_quit {
+                    app.exit(0);
+                } else {
+                    let _ = app.emit("show-exit-passphrase-modal", ());
+                }
+            }
         })
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
