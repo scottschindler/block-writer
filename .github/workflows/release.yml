@@ -55,7 +55,7 @@ jobs:
       - name: Rename DMG to stable filename
         run: |
           DMG=$(find src-tauri/target/aarch64-apple-darwin/release/bundle/dmg -name '*.dmg' | head -1)
-          cp "$DMG" src-tauri/target/Focused-Writer-mac-arm64.dmg
+          cp "$DMG" src-tauri/target/Block-Writer-mac-arm64.dmg
 
       - name: Prepare update artifacts
         run: |
@@ -63,8 +63,8 @@ jobs:
           TAR_GZ=$(find "$MACOS_BUNDLE_DIR" -name '*.app.tar.gz' ! -name '*.sig' | head -1)
           TAR_GZ_SIG="${TAR_GZ}.sig"
 
-          cp "$TAR_GZ" src-tauri/target/Focused-Writer-mac-arm64.app.tar.gz
-          cp "$TAR_GZ_SIG" src-tauri/target/Focused-Writer-mac-arm64.app.tar.gz.sig
+          cp "$TAR_GZ" src-tauri/target/Block-Writer-mac-arm64.app.tar.gz
+          cp "$TAR_GZ_SIG" src-tauri/target/Block-Writer-mac-arm64.app.tar.gz.sig
 
           SIGNATURE=$(cat "$TAR_GZ_SIG")
           VERSION="${GITHUB_REF_NAME#v}"
@@ -77,7 +77,7 @@ jobs:
             "platforms": {
               "darwin-aarch64": {
                 "signature": "$SIGNATURE",
-                "url": "https://github.com/scottschindler/focused-writer/releases/download/${GITHUB_REF_NAME}/Focused-Writer-mac-arm64.app.tar.gz"
+                "url": "https://github.com/scottschindler/block-writer/releases/download/${GITHUB_REF_NAME}/Block-Writer-mac-arm64.app.tar.gz"
               }
             }
           }
@@ -87,8 +87,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            src-tauri/target/Focused-Writer-mac-arm64.dmg
-            src-tauri/target/Focused-Writer-mac-arm64.app.tar.gz
-            src-tauri/target/Focused-Writer-mac-arm64.app.tar.gz.sig
+            src-tauri/target/Block-Writer-mac-arm64.dmg
+            src-tauri/target/Block-Writer-mac-arm64.app.tar.gz
+            src-tauri/target/Block-Writer-mac-arm64.app.tar.gz.sig
             src-tauri/target/latest.json
           generate_release_notes: true

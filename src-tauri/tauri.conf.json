@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Focused Writer",
+  "productName": "Block Writer",
   "version": "1.3.0",
-  "identifier": "com.focusedwriter.desktop",
+  "identifier": "com.blockwriter.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Focused Writer",
+        "title": "Block Writer",
         "width": 900,
         "height": 600,
         "titleBarStyle": "Overlay",
@@ -27,7 +27,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDRDNEQ1MDIxMkZBNkFGODkKUldTSnI2WXZJVkJOVExuRkw2TzFGbHlRKzdpK0FOanZQVHRDblBydGtmajkwdUt6dGZ3anZsWTAK",
       "endpoints": [
-        "https://github.com/scottschindler/focused-writer/releases/latest/download/latest.json"
+        "https://github.com/scottschindler/block-writer/releases/latest/download/latest.json"
       ]
     }
   },

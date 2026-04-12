@@ -75,8 +75,8 @@ const SYSTEM_PROCS: &[&str] = &[
     "WindowManager",
     "WallpaperVideoExtension",
     "Notes",
-    "Focused Writer",
-    "focused-writer",
+    "Block Writer",
+    "block-writer",
 ];
 
 pub struct EnforcementState {

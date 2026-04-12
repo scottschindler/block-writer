@@ -603,7 +603,7 @@ function App() {
               <div className="paywall-content">
                 <h2 className="paywall-title">Free trial complete</h2>
                 <p className="paywall-desc">
-                  You've used your 3 free sessions. Get lifetime access to Focused Writer for a one-time payment of $15.
+                  You've used your 3 free sessions. Get lifetime access to Block Writer for a one-time payment of $15.
                 </p>
                 <button
                   className="paywall-buy"

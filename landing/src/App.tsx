@@ -6,7 +6,7 @@ function SuccessPage() {
       <nav className="nav">
         <div className="nav-logo">
           <span className="nav-logo-dot" />
-          <span className="nav-logo-text">Focused Writer</span>
+          <span className="nav-logo-text">Block Writer</span>
         </div>
       </nav>
 
@@ -14,7 +14,7 @@ function SuccessPage() {
         <div className="hero-left">
           <h1>You're activated.</h1>
           <p>
-            Copy the activation code below and paste it into the Focused Writer
+            Copy the activation code below and paste it into the Block Writer
             app to unlock unlimited sessions.
           </p>
           <div className="activation-code">
@@ -27,13 +27,13 @@ function SuccessPage() {
             </button>
           </div>
           <p className="hint">
-            Open Focused Writer and paste this code in the activation field.
+            Open Block Writer and paste this code in the activation field.
           </p>
         </div>
       </main>
 
       <footer className="footer">
-        <span>Focused Writer &copy; 2026</span>
+        <span>Block Writer &copy; 2026</span>
       </footer>
     </div>
   );
@@ -49,11 +49,11 @@ function App() {
       <nav className="nav">
         <div className="nav-logo">
           <span className="nav-logo-dot" />
-          <span className="nav-logo-text">Focused Writer</span>
+          <span className="nav-logo-text">Block Writer</span>
         </div>
         <a
           className="btn-nav"
-          href="https://github.com/scottschindler/focused-writer/releases/latest/download/Focused-Writer-mac-arm64.dmg"
+          href="https://github.com/scottschindler/block-writer/releases/latest/download/Block-Writer-mac-arm64.dmg"
         >
           Download
         </a>
@@ -71,13 +71,13 @@ function App() {
           <div className="cta-group">
             <a
               className="btn-download"
-              href="https://github.com/scottschindler/focused-writer/releases/latest/download/Focused-Writer-mac-arm64.dmg"
+              href="https://github.com/scottschindler/block-writer/releases/latest/download/Block-Writer-mac-arm64.dmg"
             >
               Download for Mac
             </a>
             <span className="price">3 free sessions, then $15</span>
           </div>
-          <p className="install-hint">Open the downloaded file and drag Focused Writer to Applications.</p>
+          <p className="install-hint">Open the downloaded file and drag Block Writer to Applications.</p>
         </div>
 
         <div className="hero-right">
@@ -143,7 +143,7 @@ function App() {
       </main>
 
       <footer className="footer">
-        <span>Focused Writer &copy; 2026</span>
+        <span>Block Writer &copy; 2026</span>
       </footer>
     </div>
   );
