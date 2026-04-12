@@ -20,7 +20,23 @@ pub struct AppState {
     pub allow_quit: Mutex<bool>,
 }
 
+impl AppState {
+    fn should_allow_quit(&self) -> bool {
+        let allow_quit = self.allow_quit.lock().map(|g| *g).unwrap_or(false);
+        let session_active = self.session.lock().map(|s| s.state == "active").unwrap_or(false);
+        allow_quit || !session_active
+    }
+}
+
 fn main() {
+    #[cfg(target_os = "macos")]
+    {
+        use objc2_foundation::{NSProcessInfo, NSString};
+        let info = NSProcessInfo::processInfo();
+        let name = NSString::from_str("Block Writer");
+        info.setProcessName(&name);
+    }
+
     let db_path = ProjectDirs::from("com", "block-writer", "Block Writer")
         .map(|dirs| dirs.data_dir().join("documents.db"))
         .unwrap_or_else(|| std::path::PathBuf::from("documents.db"));
@@ -159,8 +175,7 @@ fn main() {
         .on_menu_event(|app, event| {
             if event.id().as_ref() == "custom-quit" {
                 let state = app.state::<AppState>();
-                let allow_quit = state.allow_quit.lock().map(|g| *g).unwrap_or(false);
-                if allow_quit {
+                if state.should_allow_quit() {
                     app.exit(0);
                 } else {
                     let _ = app.emit("show-exit-passphrase-modal", ());
@@ -170,9 +185,7 @@ fn main() {
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 let state = window.state::<AppState>();
-                let allow_quit = state.allow_quit.lock().map(|g| *g).unwrap_or(false);
-
-                if allow_quit {
+                if state.should_allow_quit() {
                     return;
                 }
 
@@ -201,9 +214,7 @@ fn main() {
         // Backup: app-level quit interception (covers paths that don't go through window close)
         if let RunEvent::ExitRequested { api, .. } = event {
             let state = app_handle.state::<AppState>();
-            let allow_quit = state.allow_quit.lock().map(|g| *g).unwrap_or(false);
-
-            if !allow_quit {
+            if !state.should_allow_quit() {
                 api.prevent_exit();
                 let _ = app_handle.emit("show-exit-passphrase-modal", ());
             }

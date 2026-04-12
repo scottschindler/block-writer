@@ -109,7 +109,8 @@ a {
 }
 
 .hero-left h1 {
-  font-size: clamp(2.8rem, 5vw, 4rem);
+  font-size: clamp(2rem, 3.5vw, 2.8rem);
+  white-space: nowrap;
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -117,10 +118,10 @@ a {
 }
 
 .hero-left p {
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.7;
   color: #444;
-  max-width: 420px;
+  max-width: 480px;
 }
 
 .cta-group {
@@ -133,10 +134,10 @@ a {
 .btn-download {
   display: inline-flex;
   align-items: center;
-  padding: 12px 24px;
+  padding: 14px 28px;
   background: var(--text);
   color: #fff;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   border-radius: 24px;
   cursor: pointer;
@@ -148,12 +149,7 @@ a {
 }
 
 .price {
-  font-size: 14px;
-  color: var(--muted);
-}
-
-.install-hint {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--muted);
 }
 
@@ -167,7 +163,7 @@ a {
 
 .app-window {
   width: 100%;
-  max-width: 520px;
+  max-width: 620px;
   background: #fafafa;
   border: 1px solid #e0e0e0;
   border-radius: 12px;
@@ -204,7 +200,7 @@ a {
 
 .demo-layout {
   display: flex;
-  height: 340px;
+  height: 400px;
 }
 
 .demo-sidebar {
