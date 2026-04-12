@@ -44,7 +44,7 @@ struct VerifyResponse {
 
 #[tauri::command]
 pub fn activate_license(state: State<AppState>, code: String) -> Result<LicenseStatus, String> {
-    let verify_url = "https://block-writer.vercel.app/api/verify";
+    let verify_url = "https://blockwriter.sh/api/verify";
     let resp = reqwest::blocking::get(format!("{}?session_id={}", verify_url, code))
         .map_err(|e| format!("Network error: {}", e))?
         .json::<VerifyResponse>()
@@ -203,9 +203,10 @@ pub fn interrupt_session(
     app_handle: AppHandle,
     state: State<AppState>,
     passphrase: String,
+    expected_passphrase: String,
 ) -> Result<SessionSnapshot, String> {
-    if passphrase != "END SESSION" {
-        return Err("incorrect passphrase".into());
+    if passphrase != "end the session now" && passphrase != expected_passphrase {
+        return Err("Incorrect passphrase".into());
     }
 
     let mut session = state.session.lock().map_err(|e| e.to_string())?;
@@ -222,7 +223,7 @@ pub fn interrupt_session(
 }
 
 #[tauri::command]
-pub fn unlock_quit(app_handle: AppHandle, passphrase: String, state: State<AppState>) -> Result<(), String> {
+pub fn unlock_quit(app_handle: AppHandle, passphrase: String, expected_passphrase: String, state: State<AppState>) -> Result<(), String> {
     let mut session = state.session.lock().map_err(|e| e.to_string())?;
 
     if session.state != "active" {
@@ -231,7 +232,7 @@ pub fn unlock_quit(app_handle: AppHandle, passphrase: String, state: State<AppSt
         return Ok(());
     }
 
-    if passphrase != "END SESSION" {
+    if passphrase != "end the session now" && passphrase != expected_passphrase {
         return Err("incorrect passphrase".into());
     }
 

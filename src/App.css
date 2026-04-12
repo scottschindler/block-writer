@@ -607,6 +607,20 @@ body {
   font-size: 12px;
 }
 
+.modal-passphrase {
+  display: block;
+  background: #f5f5f5;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: #333;
+  font-family: "SF Mono", "Monaco", "Menlo", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  word-break: break-all;
+  user-select: none;
+}
+
 .modal-input {
   width: 100%;
   padding: 8px 12px;
