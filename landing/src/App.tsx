@@ -61,7 +61,7 @@ function App() {
 
       <main className="hero">
         <div className="hero-left">
-          <h1>Just write.</h1>
+          <h1>Just Write. Block everything else.</h1>
           <p>
             A minimalist desktop environment that enforces focus at the system
             level. You set the timer. We block all other applications. No
@@ -75,9 +75,8 @@ function App() {
             >
               Download for Mac
             </a>
-            <span className="price">3 free sessions, then $15</span>
+            <span className="price">3 free sessions, then $15 for lifetime access</span>
           </div>
-          <p className="install-hint">Open the downloaded file and drag Block Writer to Applications.</p>
         </div>
 
         <div className="hero-right">
