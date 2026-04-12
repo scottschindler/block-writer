@@ -53,7 +53,7 @@ function App() {
         </div>
         <a
           className="btn-nav"
-          href="https://github.com/scottschindler/block-writer/releases/latest/download/Block-Writer-mac-arm64.dmg"
+          href="https://github.com/scottschindler/focused-writer/releases/latest/download/Block-Writer-mac-arm64.dmg"
         >
           Download
         </a>
@@ -71,7 +71,7 @@ function App() {
           <div className="cta-group">
             <a
               className="btn-download"
-              href="https://github.com/scottschindler/block-writer/releases/latest/download/Block-Writer-mac-arm64.dmg"
+              href="https://github.com/scottschindler/focused-writer/releases/latest/download/Block-Writer-mac-arm64.dmg"
             >
               Download for Mac
             </a>

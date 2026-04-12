@@ -77,7 +77,7 @@ jobs:
             "platforms": {
               "darwin-aarch64": {
                 "signature": "$SIGNATURE",
-                "url": "https://github.com/scottschindler/block-writer/releases/download/${GITHUB_REF_NAME}/Block-Writer-mac-arm64.app.tar.gz"
+                "url": "https://github.com/scottschindler/focused-writer/releases/download/${GITHUB_REF_NAME}/Block-Writer-mac-arm64.app.tar.gz"
               }
             }
           }
