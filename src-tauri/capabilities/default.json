@@ -1,6 +1,6 @@
 {
   "identifier": "default",
-  "description": "Default capabilities for the focused writer app",
+  "description": "Default capabilities for the block writer app",
   "windows": ["*"],
   "permissions": [
     "core:event:default",

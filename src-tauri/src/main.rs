@@ -21,7 +21,7 @@ pub struct AppState {
 }
 
 fn main() {
-    let db_path = ProjectDirs::from("com", "focused-writer", "Focused Writer")
+    let db_path = ProjectDirs::from("com", "block-writer", "Block Writer")
         .map(|dirs| dirs.data_dir().join("documents.db"))
         .unwrap_or_else(|| std::path::PathBuf::from("documents.db"));
 
@@ -72,10 +72,10 @@ fn main() {
         .setup(|app| {
             let handle = app.handle();
 
-            let app_menu = SubmenuBuilder::new(handle, "Focused Writer")
+            let app_menu = SubmenuBuilder::new(handle, "Block Writer")
                 .item(&PredefinedMenuItem::about(
                     handle,
-                    Some("Focused Writer"),
+                    Some("Block Writer"),
                     None,
                 )?)
                 .separator()
@@ -84,7 +84,7 @@ fn main() {
                 .item(&PredefinedMenuItem::show_all(handle, None)?)
                 .separator()
                 .item(&PredefinedMenuItem::close_window(handle, None)?)
-                .item(&MenuItem::with_id(handle, "custom-quit", "Quit Focused Writer", true, Some("CmdOrCtrl+Q"))?)
+                .item(&MenuItem::with_id(handle, "custom-quit", "Quit Block Writer", true, Some("CmdOrCtrl+Q"))?)
                 .build()?;
 
             let edit_menu = SubmenuBuilder::new(handle, "Edit")
