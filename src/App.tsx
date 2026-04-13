@@ -10,6 +10,29 @@ import type { Update } from "@tauri-apps/plugin-updater";
 
 const appWindow = getCurrentWindow();
 
+const PASSPHRASE_WORDS = [
+  "amber", "bridge", "castle", "delta", "ember", "frost", "grove", "hatch",
+  "ivory", "junco", "knelt", "latch", "marsh", "noble", "orbit", "plank",
+  "quartz", "ridge", "storm", "thorn", "umbra", "vault", "whisk", "xenon",
+  "yacht", "zephyr", "blaze", "crest", "drift", "flint", "gleam", "haste",
+  "jolts", "knack", "lunar", "mount", "nexus", "optic", "prism", "quest",
+  "raven", "shard", "trove", "unfit", "vigor", "whelp", "axiom", "brisk",
+];
+
+function generatePassphrase(): string {
+  const words: string[] = [];
+  for (let i = 0; i < 20; i++) {
+    const idx = Math.floor(Math.random() * PASSPHRASE_WORDS.length);
+    let word = PASSPHRASE_WORDS[idx];
+    // Randomly capitalize some words
+    if (Math.random() < 0.3) word = word.charAt(0).toUpperCase() + word.slice(1);
+    // Randomly add a digit suffix
+    if (Math.random() < 0.2) word += Math.floor(Math.random() * 10);
+    words.push(word);
+  }
+  return words.join(" ");
+}
+
 interface Document {
   id: number;
   title: string;
@@ -101,6 +124,7 @@ function App() {
 
   const [showModal, setShowModal] = useState(false);
   const [passphrase, setPassphrase] = useState("");
+  const [expectedPassphrase, setExpectedPassphrase] = useState("");
   const [modalError, setModalError] = useState("");
   const [exitIntent, setExitIntent] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
@@ -330,6 +354,7 @@ function App() {
     let unlisten: (() => void) | undefined;
     listen("show-exit-passphrase-modal", () => {
       setExitIntent(true);
+      setExpectedPassphrase(generatePassphrase());
       setShowModal(true);
     }).then((fn) => {
       unlisten = fn;
@@ -340,24 +365,25 @@ function App() {
   const handleConfirm = async () => {
     try {
       if (exitIntent) {
-        await invoke("unlock_quit", { passphrase });
+        await invoke("unlock_quit", { passphrase, expectedPassphrase });
         setShowModal(false);
         setPassphrase("");
         setModalError("");
         await getCurrentWindow().close();
       } else {
-        await interrupt(passphrase);
+        await interrupt(passphrase, expectedPassphrase);
         setShowModal(false);
         setPassphrase("");
         setModalError("");
       }
     } catch {
-      setModalError("Incorrect passphrase. Type END SESSION.");
+      setModalError("Incorrect passphrase");
     }
   };
 
   const openEndSessionModal = () => {
     setExitIntent(false);
+    setExpectedPassphrase(generatePassphrase());
     setShowModal(true);
   };
 
@@ -663,8 +689,9 @@ function App() {
           <div className="modal">
             <h3 className="modal-title">{exitIntent ? "Quit App" : "End Session"}</h3>
             <p className="modal-desc">
-              Type <code>END SESSION</code> to confirm
+              Type the following exactly to confirm:
             </p>
+            <code className="modal-passphrase">{expectedPassphrase}</code>
             <input
               className="modal-input"
               value={passphrase}
@@ -673,7 +700,8 @@ function App() {
                 setModalError("");
               }}
               onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
-              placeholder="END SESSION"
+              onPaste={(e) => e.preventDefault()}
+              placeholder=""
               autoFocus
             />
             {modalError && <p className="modal-error">{modalError}</p>}

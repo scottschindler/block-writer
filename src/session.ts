@@ -21,6 +21,6 @@ export function stopSession(): Promise<SessionSnapshot> {
   return invoke<SessionSnapshot>("stop_session");
 }
 
-export function interruptSession(passphrase: string): Promise<SessionSnapshot> {
-  return invoke<SessionSnapshot>("interrupt_session", { passphrase });
+export function interruptSession(passphrase: string, expectedPassphrase: string): Promise<SessionSnapshot> {
+  return invoke<SessionSnapshot>("interrupt_session", { passphrase, expectedPassphrase });
 }

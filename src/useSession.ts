@@ -17,8 +17,8 @@ export function useSession() {
     setSession(s);
   }, []);
 
-  const interrupt = useCallback(async (passphrase: string) => {
-    const s = await interruptSession(passphrase);
+  const interrupt = useCallback(async (passphrase: string, expectedPassphrase: string) => {
+    const s = await interruptSession(passphrase, expectedPassphrase);
     setSession(s);
   }, []);
 
