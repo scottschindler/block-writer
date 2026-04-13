@@ -12,6 +12,10 @@
   --muted: #888888;
   --border: #e5e5e5;
   --accent: #0d0d0d;
+  --surface: #f5f5f5;
+  --green: #16a34a;
+  --accent-hover: #333333;
+  --text-muted: #666666;
 }
 
 html,
@@ -406,9 +410,54 @@ a {
   color: var(--text-muted);
 }
 
+/* ── Legal pages ─────────────────────────────────────────────────── */
+
+.legal {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.legal h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.legal h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 32px;
+  margin-bottom: 8px;
+}
+
+.legal p {
+  margin-bottom: 12px;
+  color: #444;
+}
+
+.legal ul {
+  margin-bottom: 12px;
+  padding-left: 24px;
+}
+
+.legal li {
+  margin-bottom: 6px;
+  color: #444;
+}
+
+.legal a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
 /* ── Footer ───────────────────────────────────────────────────────── */
 
 .footer {
+  display: flex;
+  align-items: center;
   padding: 28px 48px;
   font-size: 13px;
   color: var(--muted);

@@ -205,7 +205,7 @@ pub fn interrupt_session(
     passphrase: String,
     expected_passphrase: String,
 ) -> Result<SessionSnapshot, String> {
-    if passphrase != "end the session now" && passphrase != expected_passphrase {
+    if passphrase != expected_passphrase {
         return Err("Incorrect passphrase".into());
     }
 
@@ -232,7 +232,7 @@ pub fn unlock_quit(app_handle: AppHandle, passphrase: String, expected_passphras
         return Ok(());
     }
 
-    if passphrase != "end the session now" && passphrase != expected_passphrase {
+    if passphrase != expected_passphrase {
         return Err("incorrect passphrase".into());
     }
 
