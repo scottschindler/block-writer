@@ -163,6 +163,13 @@ function App() {
     });
   }, []);
 
+  const handleEditorKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      document.execCommand("insertText", false, "    ");
+    }
+  }, []);
+
   const getPlainText = useCallback(() => {
     return contentRef.current?.innerText || "";
   }, []);
@@ -362,6 +369,28 @@ function App() {
     document.addEventListener("selectionchange", updateToolbarState);
     return () => document.removeEventListener("selectionchange", updateToolbarState);
   }, [updateToolbarState]);
+
+  const isActiveRef = useRef(false);
+  isActiveRef.current = session.state === "active";
+
+  useEffect(() => {
+    const hide = () => {
+      if (isActiveRef.current) {
+        contentRef.current?.classList.add("editor--cursor-hidden");
+      }
+    };
+    const show = () => {
+      contentRef.current?.classList.remove("editor--cursor-hidden");
+    };
+
+    window.addEventListener("keydown", hide);
+    window.addEventListener("mousemove", show);
+
+    return () => {
+      window.removeEventListener("keydown", hide);
+      window.removeEventListener("mousemove", show);
+    };
+  }, []);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -715,6 +744,7 @@ function App() {
               className="editor"
               contentEditable
               onInput={handleInput}
+              onKeyDown={handleEditorKeyDown}
               onKeyUp={updateToolbarState}
               onMouseUp={updateToolbarState}
               data-placeholder="Start writing..."

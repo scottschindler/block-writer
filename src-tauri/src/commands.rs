@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
 
 use crate::enforcement::EnforcementState;
 use crate::session::SessionSnapshot;
@@ -170,8 +170,12 @@ pub fn start_session(app_handle: AppHandle, duration_sec: u64, state: State<AppS
         *guard = Some(enf);
     }
 
-    #[cfg(target_os = "macos")]
-    let _ = app_handle.set_dock_visibility(false);
+    // Native macOS fullscreen hides the dock in its own Space, so we don't
+    // call set_dock_visibility here. Transforming to UIElement (what that API
+    // does on macOS) makes the app ineligible for native fullscreen.
+    if let Some(win) = app_handle.get_webview_window("main") {
+        let _ = win.set_fullscreen(true);
+    }
 
     Ok(session.snapshot())
 }
@@ -192,8 +196,9 @@ pub fn stop_session(app_handle: AppHandle, state: State<AppState>) -> Result<Ses
         *guard = None;
     }
 
-    #[cfg(target_os = "macos")]
-    let _ = app_handle.set_dock_visibility(true);
+    if let Some(win) = app_handle.get_webview_window("main") {
+        let _ = win.set_fullscreen(false);
+    }
 
     Ok(session.snapshot())
 }
@@ -216,8 +221,9 @@ pub fn interrupt_session(
         *guard = None;
     }
 
-    #[cfg(target_os = "macos")]
-    let _ = app_handle.set_dock_visibility(true);
+    if let Some(win) = app_handle.get_webview_window("main") {
+        let _ = win.set_fullscreen(false);
+    }
 
     Ok(session.snapshot())
 }
@@ -242,8 +248,9 @@ pub fn unlock_quit(app_handle: AppHandle, passphrase: String, expected_passphras
         *guard = None;
     }
 
-    #[cfg(target_os = "macos")]
-    let _ = app_handle.set_dock_visibility(true);
+    if let Some(win) = app_handle.get_webview_window("main") {
+        let _ = win.set_fullscreen(false);
+    }
 
     let mut allow_quit = state.allow_quit.lock().map_err(|e| e.to_string())?;
     *allow_quit = true;
