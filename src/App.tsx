@@ -122,6 +122,8 @@ function App() {
   const contentHtml = useRef("");
   const dirty = useRef(false);
   const autosaveTimer = useRef<number | null>(null);
+  const currentDocIdRef = useRef<number | null>(null);
+  const switchInFlight = useRef<Promise<void> | null>(null);
 
   const [showModal, setShowModal] = useState(false);
   const [passphrase, setPassphrase] = useState("");
@@ -129,6 +131,7 @@ function App() {
   const [modalError, setModalError] = useState("");
   const [exitIntent, setExitIntent] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; docId: number } | null>(null);
 
   const [license, setLicense] = useState<LicenseStatus | null>(null);
   const [activationCode, setActivationCode] = useState("");
@@ -168,6 +171,12 @@ function App() {
       e.preventDefault();
       document.execCommand("insertText", false, "    ");
     }
+  }, []);
+
+  const insertTodo = useCallback(() => {
+    if (!contentRef.current) return;
+    contentRef.current.focus();
+    document.execCommand("insertHTML", false, '<input type="checkbox">&nbsp;');
   }, []);
 
   const getPlainText = useCallback(() => {
@@ -257,30 +266,51 @@ function App() {
     }
   }, [session.state]);
 
-  const save = useCallback(async () => {
-    if (docId === null) return;
+  useEffect(() => {
+    currentDocIdRef.current = docId;
+  }, [docId]);
+
+  const flushCurrent = useCallback(async () => {
     if (autosaveTimer.current !== null) {
       window.clearTimeout(autosaveTimer.current);
       autosaveTimer.current = null;
     }
+    const id = currentDocIdRef.current;
+    const el = contentRef.current;
+    if (id === null || !el) return;
+    if (!dirty.current) return;
+    const html = el.innerHTML;
+    const text = el.innerText || "";
+    const firstLine = text.split("\n").find((l) => l.trim() !== "") || "";
+    const freshTitle = firstLine.trim().substring(0, 100);
+    try {
+      await invoke("update_document", { id, title: freshTitle, content: html });
+      dirty.current = false;
+      contentHtml.current = html;
+    } catch (e) {
+      setStatus("Save failed");
+      throw e;
+    }
+  }, []);
+
+  const save = useCallback(async () => {
+    if (currentDocIdRef.current === null) return;
     setStatus("Saving...");
-    await invoke("update_document", { id: docId, title, content: contentHtml.current });
-    dirty.current = false;
-    setStatus("Saved");
-    await loadDocs();
-    setTimeout(() => setStatus(""), 1500);
-  }, [docId, title, loadDocs]);
+    try {
+      await flushCurrent();
+      setStatus("Saved");
+      await loadDocs();
+      setTimeout(() => setStatus(""), 1500);
+    } catch {
+      setTimeout(() => setStatus(""), 2000);
+    }
+  }, [flushCurrent, loadDocs]);
 
   const createNew = useCallback(async () => {
-    if (autosaveTimer.current !== null) {
-      window.clearTimeout(autosaveTimer.current);
-      autosaveTimer.current = null;
+    if (switchInFlight.current) {
+      try { await switchInFlight.current; } catch {}
     }
-    // Only save current if it was edited
-    if (docId !== null && dirty.current) {
-      await invoke("update_document", { id: docId, title, content: contentHtml.current });
-      dirty.current = false;
-    }
+    try { await flushCurrent(); } catch { return; }
     const id = await invoke<number>("create_document");
     setDocId(id);
     setTitle("");
@@ -290,25 +320,37 @@ function App() {
     }
     updateCounts();
     await loadDocs();
-  }, [docId, title, loadDocs, updateCounts]);
+  }, [flushCurrent, loadDocs, updateCounts]);
 
   const switchDoc = useCallback(async (doc: Document) => {
-    if (autosaveTimer.current !== null) {
-      window.clearTimeout(autosaveTimer.current);
-      autosaveTimer.current = null;
+    if (switchInFlight.current) {
+      try { await switchInFlight.current; } catch {}
     }
-    // Only save current if it was edited
-    if (docId !== null && dirty.current) {
-      await invoke("update_document", { id: docId, title, content: contentHtml.current });
-      dirty.current = false;
-      await loadDocs();
+    if (doc.id === currentDocIdRef.current) return;
+    const run = (async () => {
+      try {
+        await flushCurrent();
+      } catch {
+        return;
+      }
+      const documents = await loadDocs();
+      const fresh = documents.find((d) => d.id === doc.id) ?? doc;
+      loadDocument(fresh);
+      updateCounts();
+    })();
+    switchInFlight.current = run;
+    try {
+      await run;
+    } finally {
+      if (switchInFlight.current === run) switchInFlight.current = null;
     }
-    loadDocument(doc);
-    updateCounts();
-  }, [docId, title, loadDocument, loadDocs, updateCounts]);
+  }, [flushCurrent, loadDocument, loadDocs, updateCounts]);
 
   const confirmDelete = useCallback(async () => {
     if (deleteTarget === null) return;
+    if (switchInFlight.current) {
+      try { await switchInFlight.current; } catch {}
+    }
     const id = deleteTarget;
     setDeleteTarget(null);
     await invoke("delete_document", { id });
@@ -370,6 +412,44 @@ function App() {
     return () => document.removeEventListener("selectionchange", updateToolbarState);
   }, [updateToolbarState]);
 
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const close = () => setCtxMenu(null);
+    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setCtxMenu(null); };
+    window.addEventListener("mousedown", close);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("blur", close);
+    window.addEventListener("keydown", onEsc);
+    return () => {
+      window.removeEventListener("mousedown", close);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("blur", close);
+      window.removeEventListener("keydown", onEsc);
+    };
+  }, [ctxMenu]);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const onChange = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (!target || target.tagName !== "INPUT") return;
+      const cb = target as HTMLInputElement;
+      if (cb.type !== "checkbox") return;
+      if (cb.checked) cb.setAttribute("checked", "");
+      else cb.removeAttribute("checked");
+      contentHtml.current = el.innerHTML;
+      dirty.current = true;
+      if (autosaveTimer.current !== null) window.clearTimeout(autosaveTimer.current);
+      autosaveTimer.current = window.setTimeout(() => {
+        autosaveTimer.current = null;
+        flushCurrent().catch(() => {});
+      }, 500);
+    };
+    el.addEventListener("change", onChange);
+    return () => el.removeEventListener("change", onChange);
+  }, [flushCurrent]);
+
   const isActiveRef = useRef(false);
   isActiveRef.current = session.state === "active";
 
@@ -411,18 +491,7 @@ function App() {
         setShowModal(false);
         setPassphrase("");
         setModalError("");
-        if (autosaveTimer.current !== null) {
-          window.clearTimeout(autosaveTimer.current);
-          autosaveTimer.current = null;
-        }
-        if (docId !== null && dirty.current) {
-          await invoke("update_document", {
-            id: docId,
-            title,
-            content: contentHtml.current,
-          });
-          dirty.current = false;
-        }
+        try { await flushCurrent(); } catch {}
         await getCurrentWindow().close();
       } else {
         await interrupt(passphrase, expectedPassphrase);
@@ -457,20 +526,7 @@ function App() {
       }
       autosaveTimer.current = window.setTimeout(() => {
         autosaveTimer.current = null;
-        if (docId !== null && dirty.current) {
-          const text = contentRef.current?.innerText || "";
-          const firstLine = text.split("\n").find((l) => l.trim() !== "") || "";
-          const freshTitle = firstLine.trim().substring(0, 100);
-          invoke("update_document", {
-            id: docId,
-            title: freshTitle,
-            content: contentHtml.current,
-          })
-            .then(() => {
-              dirty.current = false;
-            })
-            .catch(() => {});
-        }
+        flushCurrent().catch(() => {});
       }, 1000);
       updateCounts();
       // Derive title from first line of text
@@ -478,14 +534,17 @@ function App() {
       const firstLine = text.split("\n").find((l) => l.trim() !== "") || "";
       const newTitle = firstLine.trim().substring(0, 100);
       setTitle(newTitle);
-      // Move current doc to top of sidebar immediately
+      // Update sidebar title live + move edited doc to the top
       if (docId !== null) {
         setDocs((prev) => {
           const idx = prev.findIndex((d) => d.id === docId);
-          if (idx <= 0) return prev;
+          if (idx < 0) return prev;
+          const doc = prev[idx];
+          const nextTitle = newTitle || doc.title;
+          if (idx === 0 && doc.title === nextTitle) return prev;
           const updated = [...prev];
-          const [doc] = updated.splice(idx, 1);
-          updated.unshift({ ...doc, title: newTitle || doc.title });
+          updated.splice(idx, 1);
+          updated.unshift({ ...doc, title: nextTitle });
           return updated;
         });
       }
@@ -551,6 +610,11 @@ function App() {
                   key={doc.id}
                   className={`sidebar-item${doc.id === docId ? " sidebar-item--active" : ""}`}
                   onClick={() => switchDoc(doc)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCtxMenu({ x: e.clientX, y: e.clientY, docId: doc.id });
+                  }}
                 >
                   <span className="sidebar-item-title">
                     {doc.title || "Untitled"}
@@ -657,6 +721,11 @@ function App() {
               onClick={() => execFormat("insertOrderedList")}
               title="Numbered list"
             />
+            <ToolbarButton
+              label="☐"
+              onClick={insertTodo}
+              title="Todo item"
+            />
             {status && <span className="status">{status}</span>}
           </div>
 
@@ -758,6 +827,25 @@ function App() {
           </div>
         </div>
       </div>
+
+      {ctxMenu && (
+        <div
+          className="ctx-menu"
+          style={{ top: ctxMenu.y, left: ctxMenu.x }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <button
+            className="ctx-menu-item"
+            onClick={() => {
+              setDeleteTarget(ctxMenu.docId);
+              setCtxMenu(null);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
 
       {showModal && (
         <div className="modal-overlay">
