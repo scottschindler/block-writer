@@ -460,6 +460,40 @@ body {
   color: #555;
 }
 
+.editor input[type="checkbox"] {
+  margin: 0 0.35em 0 0;
+  vertical-align: -1px;
+  cursor: pointer;
+  accent-color: #111;
+}
+
+.ctx-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 140px;
+  background: #fff;
+  border: 1px solid #e2e2e2;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  padding: 4px 0;
+}
+
+.ctx-menu-item {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 13px;
+  color: #111;
+  cursor: pointer;
+}
+
+.ctx-menu-item:hover {
+  background: #f2f2f2;
+}
+
 /* ── Status bar ───────────────────────────────────────────────────── */
 
 .status-bar {
