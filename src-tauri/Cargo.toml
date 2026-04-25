@@ -1,6 +1,6 @@
 [package]
 name = "block-writer"
-version = "1.9.1"
+version = "2.0.0"
 description = "A distraction-free text editor"
 authors = []
 edition = "2021"
