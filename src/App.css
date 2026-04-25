@@ -380,7 +380,7 @@ body {
   border: none;
   padding: 48px clamp(40px, 12%, 160px);
   font-size: 17px;
-  line-height: 1.6;
+  line-height: 1.35;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   outline: none;
   overflow-y: auto;
@@ -426,7 +426,7 @@ body {
 .editor div,
 .editor li,
 .editor blockquote {
-  line-height: 1.6;
+  line-height: 1.35;
 }
 
 .editor p {
