@@ -1,5 +1,6 @@
 mod commands;
 mod enforcement;
+mod focus_lock;
 mod session;
 
 use std::sync::Mutex;
@@ -146,10 +147,7 @@ fn main() {
                             *enf = None;
                         }
 
-                        if let Some(win) = app_handle.get_webview_window("main") {
-                            let _ = win.set_always_on_top(false);
-                            let _ = win.set_fullscreen(false);
-                        }
+                        focus_lock::leave(&app_handle);
                     }
 
                     if is_active {
@@ -160,17 +158,7 @@ fn main() {
                             }
                         }
 
-                        if let Some(win) = app_handle.get_webview_window("main") {
-                            // Re-enter fullscreen if the user escaped it; don't
-                            // touch always-on-top while fullscreen is in flight
-                            // — setting window level mid-transition kicks macOS
-                            // out of native fullscreen.
-                            let in_fullscreen = win.is_fullscreen().unwrap_or(false);
-                            if !in_fullscreen {
-                                let _ = win.set_fullscreen(true);
-                            }
-                            let _ = win.set_focus();
-                        }
+                        focus_lock::maintain(&app_handle);
                     }
                 }
             });
