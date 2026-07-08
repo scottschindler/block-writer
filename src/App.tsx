@@ -52,6 +52,7 @@ const DURATION_OPTIONS = [
   { label: "15 min", seconds: 900 },
   { label: "25 min", seconds: 1500 },
   { label: "60 min", seconds: 3600 },
+  { label: "90 min", seconds: 5400 },
 ];
 
 function execFormat(command: string, value?: string) {
@@ -581,10 +582,50 @@ function App() {
   const showPaywall = license !== null && !license.canStartSession;
   const sessionsRemaining = license ? license.freeSessions - license.sessionsCompleted : null;
 
+  // Delay window drag so a double-click can maximize without the first click
+  // starting a drag (which immediately snaps the window back on mouseup).
+  const dragTimerRef = useRef<number | null>(null);
+  const clearDragTimer = useCallback(() => {
+    if (dragTimerRef.current !== null) {
+      window.clearTimeout(dragTimerRef.current);
+      dragTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => clearDragTimer(), [clearDragTimer]);
+
+  const onTitleBarMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 0) return;
+      clearDragTimer();
+      // Second click of a double-click — maximize handles it; never drag.
+      if (e.detail > 1) return;
+      dragTimerRef.current = window.setTimeout(() => {
+        dragTimerRef.current = null;
+        void appWindow.startDragging();
+      }, 220);
+    },
+    [clearDragTimer]
+  );
+
+  const onTitleBarDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearDragTimer();
+      void appWindow.toggleMaximize();
+    },
+    [clearDragTimer]
+  );
+
   return (
     <div className="app">
-      {/* Drag region for window movement */}
-      <div className="drag-bar" onMouseDown={() => appWindow.startDragging()} />
+      {/* Custom title bar: delayed drag + double-click zoom */}
+      <div
+        className="drag-bar"
+        onMouseDown={onTitleBarMouseDown}
+        onDoubleClick={onTitleBarDoubleClick}
+      />
 
       <div className="layout">
         {/* Sidebar */}

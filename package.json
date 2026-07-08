@@ -1,6 +1,6 @@
 {
   "name": "block-writer",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,9 +11,10 @@
     "tauri:dev": "PATH=\"$HOME/.cargo/bin:$PATH\" tauri dev"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "@tauri-apps/plugin-process": "^2",
     "@tauri-apps/plugin-shell": "^2.3.5",
     "@tauri-apps/plugin-updater": "^2",
-    "@tauri-apps/plugin-process": "^2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

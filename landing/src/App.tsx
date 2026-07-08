@@ -181,10 +181,10 @@ function Footer() {
   return (
     <footer className="footer">
       <span>Block Writer &copy; 2026</span>
-      <span style={{ display: "flex", gap: 16, marginLeft: "auto" }}>
-        <a href="/privacy" style={{ color: "#888" }}>Privacy</a>
-        <a href="/terms" style={{ color: "#888" }}>Terms</a>
-        <a href="mailto:scottschindler29@gmail.com" style={{ color: "#888" }}>Support</a>
+      <span className="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="mailto:scottschindler29@gmail.com">Support</a>
       </span>
     </footer>
   );
