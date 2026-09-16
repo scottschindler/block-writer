@@ -4,6 +4,7 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open } from "@tauri-apps/plugin-shell";
 import { useSession } from "./useSession";
+import { handleEditorListKeyDown } from "./editorLists";
 import { getLicenseStatus, activateLicense, recordSessionCompleted, type LicenseStatus } from "./license";
 import { checkForUpdate, installUpdate, type UpdateResult } from "./updater";
 import type { Update } from "@tauri-apps/plugin-updater";
@@ -165,13 +166,6 @@ function App() {
       insertOrderedList: queryFormat("insertOrderedList"),
       blockType: getBlockType(),
     });
-  }, []);
-
-  const handleEditorKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Tab") {
-      e.preventDefault();
-      document.execCommand("insertText", false, "    ");
-    }
   }, []);
 
   const insertTodo = useCallback(() => {
@@ -754,7 +748,7 @@ function App() {
               label="•"
               active={activeFormats.insertUnorderedList}
               onClick={() => execFormat("insertUnorderedList")}
-              title="Bullet list"
+              title="Bullet list (- then Space; Tab to indent, Shift+Tab to outdent)"
             />
             <ToolbarButton
               label="1."
@@ -813,16 +807,17 @@ function App() {
               <div className="paywall-content">
                 <h2 className="paywall-title">Free trial complete</h2>
                 <p className="paywall-desc">
-                  You've used your 3 free sessions. Get lifetime access to Block Writer for a one-time payment of $15.
+                  You've used your 3 free sessions. Get lifetime access to Block Writer for a one-time payment of $29.
                 </p>
                 <button
                   className="paywall-buy"
-                  onClick={() => open("https://buy.stripe.com/eVq9AV8aT3fBaro0F06J200")}
+                  onClick={() => open("https://blockwriter.sh/buy")}
                 >
-                  Buy for $15 — Lifetime Access
+                  Buy for $29 — Lifetime Access
                 </button>
                 <div className="paywall-activate">
                   <p className="paywall-activate-label">Already purchased? Enter your activation code:</p>
+                  <button className="paywall-recover" onClick={() => open("https://blockwriter.sh/recover")}>Lost your code? Recover it by email</button>
                   <div className="paywall-activate-row">
                     <input
                       className="paywall-input"
@@ -854,7 +849,12 @@ function App() {
               className="editor"
               contentEditable
               onInput={handleInput}
-              onKeyDown={handleEditorKeyDown}
+              onKeyDown={(e) => {
+                if (handleEditorListKeyDown(e.currentTarget, e.nativeEvent)) {
+                  handleInput();
+                  updateToolbarState();
+                }
+              }}
               onKeyUp={updateToolbarState}
               onMouseUp={updateToolbarState}
               data-placeholder="Start writing..."
@@ -865,6 +865,18 @@ function App() {
           <div className="status-bar">
             <span>{wordCount} words</span>
             <span>{charCount} characters</span>
+            <button
+              type="button"
+              className="support-button"
+              title="Email scott@dashlabs.sh"
+              onClick={() => {
+                open("mailto:scott@dashlabs.sh").catch(() => {
+                  window.alert("Couldn't open your email app. Email scott@dashlabs.sh for support.");
+                });
+              }}
+            >
+              Support
+            </button>
           </div>
         </div>
       </div>
