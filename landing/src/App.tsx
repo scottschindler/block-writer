@@ -1,5 +1,43 @@
+import { useEffect, useState, type FormEvent } from "react";
+
 function SuccessPage() {
   const sessionId = new URLSearchParams(window.location.search).get("session_id");
+  const [status, setStatus] = useState<"checking" | "paid" | "unverified" | "error">(sessionId ? "checking" : "unverified");
+  const [attempt, setAttempt] = useState(0);
+  const [copyMessage, setCopyMessage] = useState("");
+
+  useEffect(() => {
+    if (!sessionId) return;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15000);
+    let active = true;
+    setStatus("checking");
+    fetch(`/api/verify?session_id=${encodeURIComponent(sessionId)}`, {
+      signal: controller.signal,
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Verification unavailable");
+        const result = await response.json();
+        if (active) setStatus(result.valid === true ? "paid" : "unverified");
+      })
+      .catch(() => { if (active) setStatus("error"); })
+      .finally(() => window.clearTimeout(timeout));
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [sessionId, attempt]);
+
+  async function copyCode() {
+    try {
+      await navigator.clipboard.writeText(sessionId!);
+      setCopyMessage("Copied. Save this code so you can activate again later.");
+    } catch {
+      setCopyMessage("Copy didn't work. Select the code above and copy it manually.");
+    }
+  }
 
   return (
     <div className="page">
@@ -12,28 +50,75 @@ function SuccessPage() {
 
       <main className="hero">
         <div className="hero-left">
-          <h1>You're activated.</h1>
-          <p>
-            Copy the activation code below and paste it into the Block Writer
-            app to unlock unlimited sessions.
-          </p>
-          <div className="activation-code">
-            <code>{sessionId}</code>
-            <button
-              className="btn-copy"
-              onClick={() => navigator.clipboard.writeText(sessionId || "")}
-            >
-              Copy
-            </button>
-          </div>
-          <p className="hint">
-            Open Block Writer and paste this code in the activation field.
-          </p>
+          <h1>{status === "paid" ? "Your payment is confirmed." : status === "checking" ? "Checking your payment…" : "Payment not confirmed yet."}</h1>
+          {status === "paid" ? (
+            <>
+              <p>Copy your activation code and paste it into Block Writer to unlock unlimited sessions.</p>
+              <div className="activation-code">
+                <code>{sessionId}</code>
+                <button className="btn-copy" onClick={copyCode}>Copy</button>
+              </div>
+              <p className="hint" role="status">{copyMessage || "Keep this code safe. You'll need it if you reinstall the app."}</p>
+              <a className="btn-nav" href="https://github.com/scottschindler/focused-writer/releases/latest/download/Block-Writer-mac-arm64.dmg">Download for Mac</a>
+            </>
+          ) : (
+            <div role="status">
+              <p>{status === "checking" ? "Please wait while we verify your purchase." : !sessionId ? "This page is missing your checkout reference. Open the confirmation link from your completed checkout, or contact support if you've already paid." : status === "error" ? "We couldn't reach the payment verification service. Please try again. You don't need to pay again." : "Your payment may still be processing, or this checkout reference isn't valid. Try again shortly. If you've already paid, don't make another purchase."}</p>
+              {sessionId && status !== "checking" && <button className="btn-copy" onClick={() => setAttempt((value) => value + 1)}>Check again</button>}
+              {status !== "checking" && <p className="hint"><a href="/recover">Recover your activation code by email</a>, or <a href="mailto:scottschindler29@gmail.com">contact support</a>.</p>}
+            </div>
+          )}
         </div>
       </main>
 
       <Footer />
     </div>
+  );
+}
+
+function RecoverPage() {
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  async function recover(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (sending) return;
+    setSending(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/recover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+        signal: AbortSignal.timeout(60000),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Please try again later.");
+      setMessage(result.message);
+    } catch (err) {
+      setError(err instanceof Error && err.name !== "TimeoutError" ? err.message : "The request timed out. Check your inbox before trying again.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <LegalPage title="Recover your activation code">
+      <p>Enter the email you used to buy Block Writer. We'll send your code to that address. No account needed.</p>
+      <form className="recovery-form" onSubmit={recover}>
+        <label htmlFor="purchase-email">Purchase email</label>
+        <input id="purchase-email" type="email" autoComplete="email" required maxLength={254}
+          value={email} onChange={(event) => setEmail(event.target.value)} disabled={sending}
+          placeholder="you@example.com" />
+        <button className="btn-copy" type="submit" disabled={sending}>{sending ? "Sending…" : "Email my activation code"}</button>
+        {message && <p role="status">{message}</p>}
+        {error && <p role="alert">{error}</p>}
+      </form>
+      <p>Need help? <a href="mailto:scottschindler29@gmail.com">Contact support</a>.</p>
+    </LegalPage>
   );
 }
 
@@ -106,6 +191,7 @@ function PrivacyPage() {
 
       <h2>Third-Party Services</h2>
       <ul>
+        <li><strong>Resend:</strong> If you request license recovery, we use Resend to send your activation code to your purchase email.</li>
         <li><strong>Stripe:</strong> Payment processing. See <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">Stripe's Privacy Policy</a>.</li>
         <li><strong>GitHub:</strong> Application distribution and updates.</li>
       </ul>
@@ -133,7 +219,7 @@ function TermsPage() {
       <h2>License</h2>
       <p>
         Block Writer offers 3 free writing sessions. After that, a one-time
-        payment of $15 grants you a lifetime license to use the application.
+        payment of $29 grants you a lifetime license to use the application.
         The license is for personal use and is non-transferable.
       </p>
 
@@ -182,6 +268,7 @@ function Footer() {
     <footer className="footer">
       <span>Block Writer &copy; 2026</span>
       <span className="footer-links">
+        <a href="/recover">Recover license</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
         <a href="mailto:scottschindler29@gmail.com">Support</a>
@@ -193,6 +280,7 @@ function Footer() {
 function App() {
   const path = window.location.pathname;
 
+  if (path === "/recover") return <RecoverPage />;
   if (path === "/success") return <SuccessPage />;
   if (path === "/privacy") return <PrivacyPage />;
   if (path === "/terms") return <TermsPage />;
@@ -228,7 +316,7 @@ function App() {
             >
               Download for Mac
             </a>
-            <span className="price">3 free sessions, then $15 for lifetime access</span>
+            <span className="price">3 free sessions, then $29 for lifetime access</span>
           </div>
         </div>
 

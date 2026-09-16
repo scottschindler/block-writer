@@ -1,7 +1,32 @@
 {
   "rewrites": [
-    { "source": "/success", "destination": "/index.html" },
-    { "source": "/privacy", "destination": "/index.html" },
-    { "source": "/terms", "destination": "/index.html" }
-  ]
+    {
+      "source": "/success",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/recover",
+      "destination": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/buy",
+      "destination": "https://buy.stripe.com/cNi5kFaj1dUfarofzU6J201",
+      "permanent": false
+    }
+  ],
+  "functions": {
+    "api/recover.ts": {
+      "maxDuration": 60
+    }
+  }
 }

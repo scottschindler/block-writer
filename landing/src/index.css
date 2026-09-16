@@ -621,3 +621,7 @@ a {
     animation-duration: 0.01ms !important;
   }
 }
+
+.recovery-form { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin: 24px 0; }
+.recovery-form input { box-sizing: border-box; width: 100%; max-width: 420px; padding: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--bg-elevated); color: var(--text); font: inherit; }
+.recovery-form button:disabled { opacity: .6; cursor: wait; }
